@@ -6,10 +6,11 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // API Service
 class ApiService {
-  static const String baseUrl = 'http://localhost:5000';
+  static String get baseUrl => dotenv.env['API_BASE'] ?? 'https://appifyours.com';
   
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
@@ -279,9 +280,9 @@ class WishlistManager extends ChangeNotifier {
 
 // API Configuration
 class ApiConfig {
-  static const String baseUrl = 'http://localhost:5000';
+  static String get baseUrl => dotenv.env['API_BASE'] ?? 'https://appifyours.com';
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
-  static const String appId = 'APP_ID_HERE';
+  static String get appId => dotenv.env['APP_ID'] ?? 'appifyours_default';
 }
 
 // Session Manager
@@ -316,7 +317,10 @@ class AdminManager {
   }
 }
 
-void main() => runApp(const MyApp());
+void main() async {
+  await dotenv.load(fileName: ".env");
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -334,7 +338,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
