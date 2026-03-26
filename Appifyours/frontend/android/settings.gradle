@@ -14,7 +14,39 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def flutterSdkPath = {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -46,7 +78,39 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         file("local.properties").withInputStream { properties.load(it) }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -78,7 +142,39 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -110,7 +206,55 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -174,7 +318,55 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     repositories {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -206,7 +398,39 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         mavenCentral()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -238,6 +462,22 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
 
@@ -254,7 +494,55 @@ pluginManagement {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -302,7 +590,39 @@ plugins {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -334,7 +654,39 @@ plugins {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     id "org.jetbrains.kotlin.android" version "1.8.0" apply false
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -382,7 +734,55 @@ plugins {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 include ":app"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
