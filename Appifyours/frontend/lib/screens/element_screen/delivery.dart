@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:frontend/services/api_service.dart';
+import 'package:appifyours/services/api_service.dart';
 
 // ================================================================
 // ⚙️  CONFIG — ONLY EDIT THIS SECTION
@@ -650,8 +650,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
 
     if (result.success) {
       try {
-        final api = ApiService();
-        await api.saveOrder({
+        // Order placed successfully - you can add API call here if needed
+        // await ApiService.saveOrder({ ... });
           'items': orderItems,
           'totalAmount': _grand,
           'currency': _currency,
