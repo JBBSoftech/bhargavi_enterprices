@@ -14,6 +14,22 @@ const express = require('express');
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const mongoose = require('mongoose');
 
 
@@ -30,7 +46,39 @@ const mongoose = require('mongoose');
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const cors = require('cors');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -78,6 +126,38 @@ const app = express();
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Middleware
 
 
@@ -94,7 +174,39 @@ const app = express();
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.use(cors());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -142,7 +254,55 @@ app.use(express.json());
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // MongoDB connection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -174,7 +334,39 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bhargavi_
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   useNewUrlParser: true,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -206,7 +398,55 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bhargavi_
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -254,7 +494,39 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bhargavi_
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const productSchema = new mongoose.Schema({
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -286,7 +558,39 @@ const productSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   price: { type: Number, required: true },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -318,7 +622,39 @@ const productSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   image: { type: String },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -350,7 +686,39 @@ const productSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   inStock: { type: Boolean, default: true },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -382,7 +750,55 @@ const productSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -446,7 +862,55 @@ const Product = mongoose.model('Product', productSchema);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // User Schema
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -478,7 +942,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   name: { type: String, required: true },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -510,7 +1006,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   phone: { type: String },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -542,7 +1070,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     street: String,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -574,7 +1134,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     state: String,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -606,7 +1198,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -638,7 +1262,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     orderId: String,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -670,7 +1326,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       productId: String,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -702,7 +1390,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       price: Number,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -734,7 +1454,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -766,7 +1518,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     status: { type: String, default: 'pending' },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -798,7 +1582,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -830,7 +1646,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     productId: String,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -862,7 +1710,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     price: Number,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -894,7 +1774,39 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     addedAt: { type: Date, default: Date.now }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -926,6 +1838,22 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   createdAt: { type: Date, default: Date.now }
 
 
@@ -942,7 +1870,55 @@ const userSchema = new mongoose.Schema({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1006,7 +1982,71 @@ const User = mongoose.model('User', userSchema);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // API Routes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1054,7 +2094,39 @@ const User = mongoose.model('User', userSchema);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/products', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1086,7 +2158,39 @@ app.get('/api/products', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const products = await Product.find({ inStock: true });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1118,7 +2222,39 @@ app.get('/api/products', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } catch (error) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1150,6 +2286,22 @@ app.get('/api/products', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -1166,7 +2318,55 @@ app.get('/api/products', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1214,6 +2414,22 @@ app.get('/api/products', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
@@ -1230,7 +2446,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   try {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1278,6 +2526,38 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const users = await UsersCreateAccount.find({ adminId }).select(
 
 
@@ -1294,7 +2574,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       'firstName lastName email phone countryCode adminObjectId adminId createdAt updatedAt'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1342,7 +2654,55 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1374,7 +2734,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       count: users.length,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1406,7 +2798,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1438,7 +2862,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     console.error('Fetch admin users error:', error);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1470,6 +2926,22 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -1486,7 +2958,55 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1534,7 +3054,39 @@ router.get('/api/admin/:adminId/users', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/products/:id', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1566,7 +3118,39 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const product = await Product.findById(req.params.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1598,7 +3182,39 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'Product not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1630,7 +3246,39 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({ success: true, data: product });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1662,7 +3310,39 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.status(500).json({ success: false, error: error.message });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1694,7 +3374,55 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1742,7 +3470,39 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/products/search/:query', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1774,7 +3534,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const query = req.params.query;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1806,7 +3598,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       $or: [
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1838,7 +3662,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         { description: { $regex: query, $options: 'i' } },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1870,7 +3726,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       ],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1902,7 +3790,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1934,7 +3854,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } catch (error) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1966,6 +3918,22 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -1982,7 +3950,55 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2030,7 +4046,39 @@ app.get('/api/products/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.post('/api/users/register', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2062,6 +4110,22 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const { name, email, phone, address } = req.body;
 
 
@@ -2078,7 +4142,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2110,7 +4206,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     if (existingUser) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2142,6 +4270,22 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
 
@@ -2158,7 +4302,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2190,7 +4366,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     await user.save();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2222,7 +4430,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({ success: true, data: user });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2254,7 +4494,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.status(500).json({ success: false, error: error.message });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2286,7 +4558,55 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2334,7 +4654,39 @@ app.post('/api/users/register', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/users/:id', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2366,7 +4718,39 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const user = await User.findById(req.params.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2398,7 +4782,39 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'User not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2430,7 +4846,39 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({ success: true, data: user });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2462,7 +4910,39 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.status(500).json({ success: false, error: error.message });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2494,7 +4974,55 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2542,7 +5070,39 @@ app.get('/api/users/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.post('/api/users/:id/cart', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2574,7 +5134,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const { productId, name, price, quantity } = req.body;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2606,7 +5198,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2638,7 +5262,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'User not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2670,7 +5326,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2702,7 +5390,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     if (existingItem) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2734,7 +5454,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2766,7 +5518,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2798,7 +5582,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     await user.save();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2830,7 +5646,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } catch (error) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2862,6 +5710,22 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -2878,7 +5742,55 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2926,7 +5838,39 @@ app.post('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/users/:id/cart', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2958,7 +5902,39 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const user = await User.findById(req.params.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2990,7 +5966,39 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'User not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3022,7 +6030,39 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({ success: true, data: user.cart });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3054,7 +6094,39 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.status(500).json({ success: false, error: error.message });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3086,7 +6158,55 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3134,7 +6254,39 @@ app.get('/api/users/:id/cart', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.post('/api/users/:id/orders', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3166,7 +6318,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const user = await User.findById(req.params.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3198,7 +6382,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'User not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3230,7 +6446,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3262,6 +6510,22 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const total = user.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
 
@@ -3278,7 +6542,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3310,7 +6606,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       orderId,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3342,7 +6670,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         productId: item.productId,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3374,7 +6734,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         price: item.price,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3406,7 +6798,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       })),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3438,7 +6862,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       status: 'pending'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3470,7 +6926,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3502,7 +6990,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     user.cart = []; // Clear cart after order
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3534,7 +7054,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3566,7 +7118,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } catch (error) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3598,6 +7182,22 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -3614,7 +7214,55 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3662,7 +7310,39 @@ app.post('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/users/:id/orders', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3694,7 +7374,39 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const user = await User.findById(req.params.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3726,7 +7438,39 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       return res.status(404).json({ success: false, error: 'User not found' });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3758,7 +7502,39 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.json({ success: true, data: user.orders });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3790,7 +7566,39 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     res.status(500).json({ success: false, error: error.message });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3822,7 +7630,55 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3870,7 +7726,39 @@ app.get('/api/users/:id/orders', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/app-config', async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3902,7 +7790,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // This would connect to your main database to get latest configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3934,7 +7854,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       adminId: '69bd41c5e3bc3eebb36ca763',
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3966,7 +7918,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       lastUpdated: new Date().toISOString(),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3998,7 +7982,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       features: {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4030,7 +8046,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         cartEnabled: true,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4062,7 +8110,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         orderTrackingEnabled: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4094,7 +8174,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4126,7 +8238,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } catch (error) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4158,6 +8302,22 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
@@ -4174,7 +8334,55 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4222,7 +8430,39 @@ app.get('/api/app-config', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/health', (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4254,7 +8494,55 @@ app.get('/health', (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4302,6 +8590,22 @@ const PORT = process.env.PORT || 3000;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.listen(PORT, () => {
 
 
@@ -4318,7 +8622,39 @@ app.listen(PORT, () => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   console.log(`Bhargavi Enterprices Backend Server running on port ${PORT}`);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4366,7 +8702,55 @@ app.listen(PORT, () => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
