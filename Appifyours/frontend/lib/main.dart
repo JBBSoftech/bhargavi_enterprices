@@ -371,7 +371,7 @@ class OrderItem {
 // ==================== API CONFIGURATION ====================
 
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.0.8:5000';
+  static const String baseUrl = 'https://appifyours.com';
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
   static const String appId = 'APP_ID_HERE';
 }
@@ -406,7 +406,7 @@ class AdminManager {
 // ==================== API SERVICE ====================
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.0.8:5000';
+  static const String baseUrl = 'https://appifyours.com';
   
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
@@ -3179,7 +3179,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
