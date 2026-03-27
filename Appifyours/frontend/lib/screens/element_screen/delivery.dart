@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../main.dart';
 
 // ================================================================
 // ⚙️  CONFIG — ONLY EDIT THIS SECTION
@@ -348,59 +349,6 @@ class ShiprocketService {
 }
 
 // ================================================================
-// 🛒  CART MODELS
-// ================================================================
-class CartItem {
-  final String id;
-  final String name;
-  final double price;
-  final double effectivePrice;
-  final int quantity;
-  final String? currencySymbol;
-
-  CartItem({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.effectivePrice,
-    this.quantity = 1,
-    this.currencySymbol,
-  });
-}
-
-class CartManager extends ChangeNotifier {
-  final List<CartItem> _items = [];
-
-  List<CartItem> get items => List.unmodifiable(_items);
-  String get displayCurrencySymbol => '₹';
-
-  double get subtotal => _items.fold(0.0, (sum, item) => sum + (item.effectivePrice * item.quantity));
-  double get totalDiscount => _items.fold(0.0, (sum, item) => sum + ((item.price - item.effectivePrice) * item.quantity));
-  double get gstAmount => subtotal * 0.18;
-  double get finalTotal => subtotal + gstAmount;
-
-  void addItem(CartItem item) {
-    _items.add(item);
-    notifyListeners();
-  }
-
-  void removeItem(String id) {
-    _items.removeWhere((item) => item.id == id);
-    notifyListeners();
-  }
-
-  void clearCart() {
-    _items.clear();
-    notifyListeners();
-  }
-
-  void clear() {
-    _items.clear();
-    notifyListeners();
-  }
-}
-
-// ================================================================
 // 🏠  HOME PAGE PLACEHOLDER
 // ================================================================
 class HomePage extends StatelessWidget {
@@ -576,7 +524,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     setState(() { _placing = false; });
 
     if (result.success) {
-      try { widget.cartManager.clearCart(); } catch (_) {}
+      try { widget.cartManager.clear(); } catch (_) {}
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => OrderSuccessPage(
