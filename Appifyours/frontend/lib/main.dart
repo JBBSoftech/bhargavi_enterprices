@@ -6,12 +6,11 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:appifyours/screens/element_screen/delivery.dart';
 
 // API Service
 class ApiService {
-  static String get baseUrl => dotenv.env['API_BASE'] ?? 'https://appifyours.com';
+  static const String baseUrl = 'https://appifyours.com';
   
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
@@ -199,10 +198,10 @@ class CartManager extends ChangeNotifier {
   void updateQuantity(String id, int quantity) {
     final index = _items.indexWhere((i) => i.id == id);
     if (index >= 0) {
-      if (quantity <= 0) {
-        _items.removeAt(index);
-      } else {
+      if (quantity > 0) {
         _items[index].quantity = quantity;
+      } else {
+        _items.removeAt(index);
       }
       notifyListeners();
     }
@@ -287,9 +286,9 @@ class WishlistManager extends ChangeNotifier {
 
 // API Configuration
 class ApiConfig {
-  static String get baseUrl => dotenv.env['API_BASE'] ?? 'https://appifyours.com';
+  static const String baseUrl = 'https://appifyours.com';
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
-  static String get appId => dotenv.env['APP_ID'] ?? 'appifyours_default';
+  static const String appId = 'APP_ID_HERE';
 }
 
 // Session Manager
@@ -324,10 +323,7 @@ class AdminManager {
   }
 }
 
-void main() async {
-  await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -345,7 +341,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
@@ -904,60 +900,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   }
 }
 
-// Delivery Checkout Page (simplified)
-class DeliveryCheckoutPage extends StatelessWidget {
-  final CartManager cartManager;
-  
-  const DeliveryCheckoutPage({super.key, required this.cartManager});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checkout'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.check_circle,
-              size: 100,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Order Placed Successfully!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Total: ${PriceUtils.formatPrice(cartManager.finalTotal)}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                cartManager.clear();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                  (route) => false,
-                );
-              },
-              child: const Text('Continue Shopping'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ChatBot Page (simplified)
+// ChatBot Page
 class ChatBotPage extends StatelessWidget {
   final String shopName;
   final String appName;
@@ -1043,6 +986,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _handleBuyNow() {
+    if (_cartManager.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty!')),
+      );
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1095,13 +1044,11 @@ class _HomePageState extends State<HomePage> {
             _dynamicProductCards = extractedProducts;
             _filterProducts(_searchQuery);
             _dynamicStoreInfo = storeInfo;
-            _isLoading = false;
           });
         }
       }
     } catch (e) {
       print('Error loading dynamic data: $e');
-      setState(() => _isLoading = false);
     }
   }
 
@@ -1140,19 +1087,6 @@ class _HomePageState extends State<HomePage> {
     if (code.isNotEmpty) return PriceUtils.currencySymbolFromCode(code);
     
     return '\$';
-  }
-
-  Color _colorFromHex(String? hexColor) {
-    if (hexColor == null || hexColor.isEmpty) return Colors.blue;
-    String localFormattedColor = hexColor.toUpperCase().replaceAll('#', '');
-    if (localFormattedColor.length == 6) {
-      localFormattedColor = 'FF' + localFormattedColor;
-    }
-    try {
-      return Color(int.parse('0x$localFormattedColor'));
-    } catch (e) {
-      return Colors.blue;
-    }
   }
 
   @override
@@ -1334,7 +1268,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // FIXED: _buildProductCard method
   Widget _buildProductCard(Map<String, dynamic> product, int index) {
     final String productId = 'product_$index';
     final String productName = product['productName'] ?? product['name'] ?? 'Product';
@@ -1344,19 +1277,11 @@ class _HomePageState extends State<HomePage> {
     final String? image = product['imageAsset'] ?? product['image'];
     final bool isInWishlist = _wishlistManager.isInWishlist(productId);
     
-    // FIX APPLIED HERE: quantity: 0 in orElse
-    final cartItem = _cartManager.items.firstWhere(
+    final existingItem = _cartManager.items.firstWhere(
       (item) => item.id == productId,
-      orElse: () => CartItem(
-        id: productId, 
-        name: productName, 
-        price: basePrice, 
-        currencySymbol: currencySymbol,
-        quantity: 0, // This ensures the button shows if item is not in cart
-      ),
+      orElse: () => CartItem(id: productId, name: productName, price: basePrice, currencySymbol: currencySymbol, quantity: 0),
     );
-    
-    final int quantityInCart = cartItem.quantity;
+    final int quantityInCart = existingItem.quantity;
 
     return Card(
       elevation: 4,
@@ -1413,7 +1338,7 @@ class _HomePageState extends State<HomePage> {
                         if (isInWishlist) {
                           _wishlistManager.removeItem(productId);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Removed from wishlist')),
+                            const SnackBar(content: Text('Removed from wishlist'), duration: Duration(seconds: 1)),
                           );
                         } else {
                           final wishlistItem = WishlistItem(
@@ -1425,7 +1350,7 @@ class _HomePageState extends State<HomePage> {
                           );
                           _wishlistManager.addItem(wishlistItem);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Added to wishlist')),
+                            const SnackBar(content: Text('Added to wishlist'), duration: Duration(seconds: 1)),
                           );
                         }
                         setState(() {});
@@ -1469,7 +1394,7 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.blue,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   if (quantityInCart > 0)
                     Container(
                       height: 32,
@@ -1479,18 +1404,27 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Row(
                         children: [
-                          IconButton(
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               if (quantityInCart > 1) {
                                 _cartManager.updateQuantity(productId, quantityInCart - 1);
                               } else {
                                 _cartManager.removeItem(productId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Removed from cart'), duration: Duration(seconds: 1)),
+                                );
                               }
                               setState(() {});
                             },
-                            icon: const Icon(Icons.remove, size: 16),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                              ),
+                              child: const Icon(Icons.remove, size: 16, color: Colors.black87),
+                            ),
                           ),
                           Expanded(
                             child: Center(
@@ -1500,16 +1434,30 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               if (quantityInCart < 10) {
                                 _cartManager.updateQuantity(productId, quantityInCart + 1);
                                 setState(() {});
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Maximum 10 items allowed'),
+                                    backgroundColor: Colors.orange,
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
                               }
                             },
-                            icon: const Icon(Icons.add, size: 16),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                              ),
+                              child: const Icon(Icons.add, size: 16, color: Colors.black87),
+                            ),
                           ),
                         ],
                       ),
@@ -1520,17 +1468,17 @@ class _HomePageState extends State<HomePage> {
                       height: 32,
                       child: ElevatedButton(
                         onPressed: () {
-                          final newItem = CartItem(
+                          final cartItem = CartItem(
                             id: productId,
                             name: productName,
                             price: basePrice,
                             image: image,
                             currencySymbol: currencySymbol,
                           );
-                          _cartManager.addItem(newItem);
+                          _cartManager.addItem(cartItem);
                           setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Added to cart')),
+                            const SnackBar(content: Text('Added to cart'), duration: Duration(seconds: 1)),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -1541,6 +1489,7 @@ class _HomePageState extends State<HomePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          minimumSize: const Size(0, 32),
                         ),
                         child: const Text(
                           'Add to Cart',
@@ -1713,7 +1662,7 @@ class _HomePageState extends State<HomePage> {
                                     } else {
                                       _cartManager.removeItem(item.id);
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Item removed from cart')),
+                                        const SnackBar(content: Text('Item removed from cart'), duration: Duration(seconds: 1)),
                                       );
                                     }
                                   },
@@ -1742,13 +1691,14 @@ class _HomePageState extends State<HomePage> {
                                 const SizedBox(width: 8),
                                 GestureDetector(
                                   onTap: () {
-                                    if (_cartManager.totalQuantity < 10) {
+                                    if (item.quantity < 10) {
                                       _cartManager.updateQuantity(item.id, item.quantity + 1);
                                     } else {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('Only 10 products allowed'),
                                           backgroundColor: Colors.orange,
+                                          duration: Duration(seconds: 1),
                                         ),
                                       );
                                     }
@@ -1936,7 +1886,7 @@ class _HomePageState extends State<HomePage> {
                             _cartManager.addItem(cartItem);
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Added to cart')),
+                              const SnackBar(content: Text('Added to cart'), duration: Duration(seconds: 1)),
                             );
                           },
                           icon: const Icon(Icons.shopping_cart),
@@ -2033,38 +1983,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _currentPageIndex,
-      onTap: _onItemTapped,
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      items: [
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Badge(
-            label: Text('${_cartManager.items.length}'),
-            isLabelVisible: _cartManager.items.length > 0,
-            child: const Icon(Icons.shopping_cart),
-          ),
-          label: 'Cart',
-        ),
-        BottomNavigationBarItem(
-          icon: Badge(
-            label: Text('${_wishlistManager.items.length}'),
-            isLabelVisible: _wishlistManager.items.length > 0,
-            child: const Icon(Icons.favorite),
-          ),
-          label: 'Wishlist',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([_cartManager, _wishlistManager]),
+      builder: (context, child) {
+        return BottomNavigationBar(
+          currentIndex: _currentPageIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Badge(
+                label: Text('${_cartManager.items.length}'),
+                isLabelVisible: _cartManager.items.isNotEmpty,
+                child: const Icon(Icons.shopping_cart),
+              ),
+              label: 'Cart',
+            ),
+            BottomNavigationBarItem(
+              icon: Badge(
+                label: Text('${_wishlistManager.items.length}'),
+                isLabelVisible: _wishlistManager.items.isNotEmpty,
+                child: const Icon(Icons.favorite),
+              ),
+              label: 'Wishlist',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        );
+      },
     );
   }
 }
