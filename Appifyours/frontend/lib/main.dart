@@ -371,7 +371,7 @@ class OrderItem {
 // ==================== API CONFIGURATION ====================
 
 class ApiConfig {
-  static const String baseUrl = 'https://appifyours.com';
+  static const String baseUrl = 'http://192.168.0.8:5000';
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
   static const String appId = 'APP_ID_HERE';
 }
@@ -406,7 +406,7 @@ class AdminManager {
 // ==================== API SERVICE ====================
 
 class ApiService {
-  static const String baseUrl = 'https://appifyours.com';
+  static const String baseUrl = 'http://192.168.0.8:5000';
   
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
@@ -514,10 +514,12 @@ class _DeliveryCheckoutPageState extends State<DeliveryCheckoutPage> {
           _savedAddresses = addressesJson
               .map((json) => Address.fromJson(jsonDecode(json)))
               .toList();
-        final defaultMatches = _savedAddresses.where((addr) => addr.isDefault);
-          final defaultAddress = defaultMatches.isNotEmpty
-              ? defaultMatches.first
-              : (_savedAddresses.isNotEmpty ? _savedAddresses.first : null);
+         Address? defaultAddress = _savedAddresses.isNotEmpty
+    ? _savedAddresses.firstWhere(
+        (addr) => addr.isDefault,
+        orElse: () => _savedAddresses.first,
+      )
+      :null;
           if (defaultAddress != null) {
             _selectedAddress = defaultAddress;
           }
@@ -3177,7 +3179,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
