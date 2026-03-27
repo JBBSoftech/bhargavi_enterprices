@@ -102,6 +102,26 @@ class CartItem {
 
   double get effectivePrice => discountPrice > 0 ? discountPrice : price;
   double get totalPrice => effectivePrice * quantity;
+  
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+    'discountPrice': discountPrice,
+    'quantity': quantity,
+    'image': image,
+    'currencySymbol': currencySymbol,
+  };
+  
+  factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
+    id: json['id'],
+    name: json['name'],
+    price: (json['price'] as num).toDouble(),
+    discountPrice: (json['discountPrice'] as num?)?.toDouble() ?? 0.0,
+    quantity: json['quantity'],
+    image: json['image'],
+    currencySymbol: json['currencySymbol'] ?? '\$',
+  );
 }
 
 class CartManager extends ChangeNotifier {
@@ -494,16 +514,13 @@ class _DeliveryCheckoutPageState extends State<DeliveryCheckoutPage> {
           _savedAddresses = addressesJson
               .map((json) => Address.fromJson(jsonDecode(json)))
               .toList();
-        // ✅ AFTER (fixed)
-final defaultAddress = _savedAddresses.isNotEmpty
-    ? _savedAddresses.firstWhere(
-        (addr) => addr.isDefault,
-        orElse: () => _savedAddresses.first,
-      )
-    : null;
-if (defaultAddress != null) {
-  _selectedAddress = defaultAddress;
-}
+          final defaultAddress = _savedAddresses.firstWhere(
+            (addr) => addr.isDefault,
+            orElse: () => _savedAddresses.isNotEmpty ? _savedAddresses.first : null,
+          );
+          if (defaultAddress != null) {
+            _selectedAddress = defaultAddress;
+          }
         });
       }
     } catch (e) {
