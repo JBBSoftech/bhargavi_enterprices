@@ -1,57 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:appifyours/screens/element_screen/delivery.dart';
 
-// API Service
-class ApiService {
-  static const String baseUrl = 'https://appifyours.com';
-  
-  Future<Map<String, dynamic>> getUserProfile() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      
-      if (token == null) return {};
-      
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/user/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return data['user'] ?? {};
-        }
-      }
-    } catch (e) {
-      print('Error fetching user profile: $e');
-    }
-    return {};
-  }
-}
+// ==================== PRICE UTILS ====================
 
-// Auth Helper
-class AuthHelper {
-  Future<bool> isAdmin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('user_role');
-    return role == 'admin';
-  }
-}
-
-final AuthHelper authHelper = AuthHelper();
-
-// PriceUtils class
 class PriceUtils {
   static String formatPrice(double price, {String currency = '\$'}) {
     return '$currency${price.toStringAsFixed(2)}';
@@ -59,7 +18,7 @@ class PriceUtils {
 
   static double parsePrice(String priceString) {
     if (priceString.isEmpty) return 0.0;
-    String numericString = priceString.replaceAll(RegExp(r'[^0-9.]'), '');
+    String numericString = priceString.replaceAll(RegExp(r'[^\d.]'), '');
     return double.tryParse(numericString) ?? 0.0;
   }
 
@@ -120,7 +79,8 @@ class PriceUtils {
   }
 }
 
-// Cart item model
+// ==================== CART MODELS ====================
+
 class CartItem {
   final String id;
   final String name;
@@ -144,7 +104,6 @@ class CartItem {
   double get totalPrice => effectivePrice * quantity;
 }
 
-// Cart manager
 class CartManager extends ChangeNotifier {
   final List<CartItem> _items = [];
   double _gstPercentage = 18.0;
@@ -154,13 +113,11 @@ class CartManager extends ChangeNotifier {
 
   String get displayCurrencySymbol {
     if (_items.isEmpty) return '\$';
-    
     final Map<String, int> currencyCounts = {};
     for (var item in _items) {
       final symbol = item.currencySymbol;
       currencyCounts[symbol] = (currencyCounts[symbol] ?? 0) + 1;
     }
-    
     String mostCommonCurrency = '\$';
     int maxCount = 0;
     currencyCounts.forEach((symbol, count) {
@@ -169,7 +126,6 @@ class CartManager extends ChangeNotifier {
         mostCommonCurrency = symbol;
       }
     });
-    
     return mostCommonCurrency;
   }
 
@@ -216,26 +172,26 @@ class CartManager extends ChangeNotifier {
     return _items.fold(0.0, (sum, item) => sum + item.totalPrice);
   }
 
-  double get totalWithTax {
-    final tax = PriceUtils.calculateTax(subtotal, 8.0);
-    return subtotal + tax;
-  }
-
   double get totalDiscount {
     return _items.fold(0.0, (sum, item) => 
       sum + ((item.price - item.effectivePrice) * item.quantity));
   }
 
   double get gstAmount {
-    return PriceUtils.calculateTax(subtotal, _gstPercentage);
+    return calculateTax(subtotal - totalDiscount, _gstPercentage);
   }
 
   double get finalTotal {
-    return subtotal + gstAmount;
+    return (subtotal - totalDiscount) + gstAmount;
+  }
+
+  double calculateTax(double amount, double percentage) {
+    return amount * (percentage / 100);
   }
 }
 
-// Wishlist item model
+// ==================== WISHLIST MODELS ====================
+
 class WishlistItem {
   final String id;
   final String name;
@@ -256,7 +212,6 @@ class WishlistItem {
   double get effectivePrice => discountPrice > 0 ? discountPrice : price;
 }
 
-// Wishlist manager
 class WishlistManager extends ChangeNotifier {
   final List<WishlistItem> _items = [];
 
@@ -284,14 +239,123 @@ class WishlistManager extends ChangeNotifier {
   }
 }
 
-// API Configuration
+// ==================== ADDRESS MODELS ====================
+
+class Address {
+  String id;
+  String fullName;
+  String phone;
+  String streetAddress;
+  String city;
+  String state;
+  String postalCode;
+  String country;
+  bool isDefault;
+  String addressType;
+
+  Address({
+    required this.id,
+    required this.fullName,
+    required this.phone,
+    required this.streetAddress,
+    required this.city,
+    required this.state,
+    required this.postalCode,
+    required this.country,
+    this.isDefault = false,
+    this.addressType = 'home',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'fullName': fullName,
+    'phone': phone,
+    'streetAddress': streetAddress,
+    'city': city,
+    'state': state,
+    'postalCode': postalCode,
+    'country': country,
+    'isDefault': isDefault,
+    'addressType': addressType,
+  };
+
+  factory Address.fromJson(Map<String, dynamic> json) => Address(
+    id: json['id'],
+    fullName: json['fullName'],
+    phone: json['phone'],
+    streetAddress: json['streetAddress'],
+    city: json['city'],
+    state: json['state'],
+    postalCode: json['postalCode'],
+    country: json['country'],
+    isDefault: json['isDefault'] ?? false,
+    addressType: json['addressType'] ?? 'home',
+  );
+
+  String get formattedAddress {
+    return '$streetAddress, $city, $state $postalCode, $country';
+  }
+}
+
+// ==================== PAYMENT METHOD ====================
+
+class PaymentMethod {
+  final String id;
+  final String name;
+  final String icon;
+  final bool isEnabled;
+
+  const PaymentMethod({
+    required this.id,
+    required this.name,
+    required this.icon,
+    this.isEnabled = true,
+  });
+}
+
+// ==================== ORDER MODELS ====================
+
+class OrderItem {
+  final String productId;
+  final String name;
+  final double price;
+  final int quantity;
+  final String? image;
+  final double discountPrice;
+  final String currencySymbol;
+
+  OrderItem({
+    required this.productId,
+    required this.name,
+    required this.price,
+    required this.quantity,
+    this.image,
+    this.discountPrice = 0.0,
+    this.currencySymbol = '\$',
+  });
+
+  double get effectivePrice => discountPrice > 0 ? discountPrice : price;
+  double get totalPrice => effectivePrice * quantity;
+
+  Map<String, dynamic> toJson() => {
+    'productId': productId,
+    'name': name,
+    'price': price,
+    'quantity': quantity,
+    'image': image,
+    'discountPrice': discountPrice,
+    'currencySymbol': currencySymbol,
+  };
+}
+
+// ==================== API CONFIGURATION ====================
+
 class ApiConfig {
   static const String baseUrl = 'https://appifyours.com';
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
   static const String appId = 'APP_ID_HERE';
 }
 
-// Session Manager
 class SessionManager {
   static String? currentUserId;
   static String? authToken;
@@ -303,74 +367,1120 @@ class SessionManager {
   }) async {
     currentUserId = userId;
     authToken = token;
-    print('✅ User logged in: $userId');
-    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     await prefs.setString('user_id', userId);
   }
 }
 
-// Admin Manager
 class AdminManager {
   static String? _currentAdminId;
 
   static Future<String> getCurrentAdminId() async {
     if (_currentAdminId != null) return _currentAdminId!;
     _currentAdminId = ApiConfig.adminObjectId;
-    print('✅ Admin ID locked: $_currentAdminId');
     return _currentAdminId!;
   }
 }
 
-void main() => runApp(const MyApp());
+// ==================== API SERVICE ====================
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ApiService {
+  static const String baseUrl = 'https://appifyours.com';
+  
+  Future<Map<String, dynamic>> getUserProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null) return {};
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/user/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return data['user'] ?? {};
+        }
+      }
+    } catch (e) {
+      print('Error fetching user profile: $e');
+    }
+    return {};
+  }
+}
+
+// ==================== DELIVERY CHECKOUT PAGE ====================
+
+class DeliveryCheckoutPage extends StatefulWidget {
+  final CartManager cartManager;
+
+  const DeliveryCheckoutPage({
+    super.key,
+    required this.cartManager,
+  });
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Generated E-commerce App',
-    theme: ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorSchemeSeed: Colors.blue,
-      appBarTheme: const AppBarTheme(
-        elevation: 4,
-        shadowColor: Colors.black38,
+  State<DeliveryCheckoutPage> createState() => _DeliveryCheckoutPageState();
+}
+
+class _DeliveryCheckoutPageState extends State<DeliveryCheckoutPage> {
+  int _currentStep = 0;
+  bool _isLoading = false;
+  bool _isProcessingOrder = false;
+
+  // Address Form Controllers
+  final _addressFormKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _streetAddressController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _postalCodeController = TextEditingController();
+  final _countryController = TextEditingController();
+
+  String _selectedAddressType = 'home';
+  bool _saveAddressAsDefault = false;
+
+  List<Address> _savedAddresses = [];
+  Address? _selectedAddress;
+  bool _useNewAddress = true;
+
+  PaymentMethod? _selectedPaymentMethod;
+  final List<PaymentMethod> _paymentMethods = const [
+    PaymentMethod(id: 'cod', name: 'Cash on Delivery', icon: '💰', isEnabled: true),
+    PaymentMethod(id: 'card', name: 'Credit/Debit Card', icon: '💳', isEnabled: true),
+    PaymentMethod(id: 'upi', name: 'UPI', icon: '📱', isEnabled: true),
+    PaymentMethod(id: 'netbanking', name: 'Net Banking', icon: '🏦', isEnabled: true),
+  ];
+
+  String _selectedDeliveryOption = 'standard';
+  final Map<String, Map<String, dynamic>> _deliveryOptions = {
+    'standard': {'name': 'Standard Delivery', 'days': '3-5 business days', 'cost': 5.99},
+    'express': {'name': 'Express Delivery', 'days': '1-2 business days', 'cost': 12.99},
+    'overnight': {'name': 'Overnight Delivery', 'days': 'Next day', 'cost': 24.99},
+  };
+
+  String _orderNotes = '';
+  double _gstPercentage = 18.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedAddresses();
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    _streetAddressController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _postalCodeController.dispose();
+    _countryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSavedAddresses() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final addressesJson = prefs.getStringList('saved_addresses');
+      if (addressesJson != null) {
+        setState(() {
+          _savedAddresses = addressesJson
+              .map((json) => Address.fromJson(jsonDecode(json)))
+              .toList();
+          final defaultAddress = _savedAddresses.firstWhere(
+            (addr) => addr.isDefault,
+            orElse: () => _savedAddresses.isNotEmpty ? _savedAddresses.first : null,
+          );
+          if (defaultAddress != null) {
+            _selectedAddress = defaultAddress;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error loading addresses: $e');
+    }
+  }
+
+  Future<void> _saveAddress(Address address) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final addressesJson = prefs.getStringList('saved_addresses') ?? [];
+      addressesJson.removeWhere((json) {
+        final existing = Address.fromJson(jsonDecode(json));
+        return existing.id == address.id;
+      });
+      addressesJson.add(jsonEncode(address.toJson()));
+      await prefs.setStringList('saved_addresses', addressesJson);
+      setState(() {
+        _savedAddresses.add(address);
+      });
+    } catch (e) {
+      print('Error saving address: $e');
+    }
+  }
+
+  double get _shippingCost => _deliveryOptions[_selectedDeliveryOption]?['cost'] ?? 5.99;
+  double get _subtotal => widget.cartManager.subtotal;
+  double get _totalDiscount => widget.cartManager.totalDiscount;
+  double get _taxAmount => (_subtotal - _totalDiscount) * (_gstPercentage / 100);
+  double get _grandTotal => (_subtotal - _totalDiscount) + _taxAmount + _shippingCost;
+
+  bool _isAddressValid() {
+    if (_useNewAddress) {
+      return _addressFormKey.currentState?.validate() ?? false;
+    }
+    return _selectedAddress != null;
+  }
+
+  void _nextStep() {
+    if (_currentStep == 0 && !_isAddressValid()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in your address details')),
+      );
+      return;
+    }
+    if (_currentStep == 1 && _selectedPaymentMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a payment method')),
+      );
+      return;
+    }
+    setState(() {
+      _currentStep++;
+    });
+  }
+
+  void _previousStep() {
+    setState(() {
+      _currentStep--;
+    });
+  }
+
+  Address _getAddress() {
+    if (!_useNewAddress && _selectedAddress != null) {
+      return _selectedAddress!;
+    }
+    return Address(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      fullName: _fullNameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      streetAddress: _streetAddressController.text.trim(),
+      city: _cityController.text.trim(),
+      state: _stateController.text.trim(),
+      postalCode: _postalCodeController.text.trim(),
+      country: _countryController.text.trim(),
+      isDefault: _saveAddressAsDefault,
+      addressType: _selectedAddressType,
+    );
+  }
+
+  Future<void> _placeOrder() async {
+    setState(() {
+      _isProcessingOrder = true;
+    });
+
+    try {
+      final address = _getAddress();
+      if (_saveAddressAsDefault && _useNewAddress) {
+        await _saveAddress(address);
+      }
+
+      final orderItems = widget.cartManager.items.map((item) => OrderItem(
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+        discountPrice: item.discountPrice,
+        currencySymbol: item.currencySymbol,
+      )).toList();
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userId = prefs.getString('user_id');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/orders/create'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'items': orderItems.map((e) => e.toJson()).toList(),
+          'shippingAddress': address.toJson(),
+          'paymentMethod': _selectedPaymentMethod!.id,
+          'deliveryOption': _selectedDeliveryOption,
+          'subtotal': _subtotal,
+          'discount': _totalDiscount,
+          'tax': _taxAmount,
+          'shippingCost': _shippingCost,
+          'total': _grandTotal,
+          'orderNotes': _orderNotes,
+          'currencySymbol': widget.cartManager.displayCurrencySymbol,
+          'userId': userId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        if (result['success'] == true) {
+          widget.cartManager.clear();
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderConfirmationPage(
+                  orderId: result['orderId'],
+                  orderNumber: result['orderNumber'],
+                  total: _grandTotal,
+                  currencySymbol: widget.cartManager.displayCurrencySymbol,
+                  estimatedDelivery: _deliveryOptions[_selectedDeliveryOption]?['days'] ?? '3-5 business days',
+                ),
+              ),
+            );
+          }
+        } else {
+          throw Exception(result['message'] ?? 'Order placement failed');
+        }
+      } else {
+        throw Exception('Failed to place order');
+      }
+    } catch (e) {
+      setState(() {
+        _isProcessingOrder = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to place order: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Checkout'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      cardTheme: const CardTheme(
-        elevation: 4,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
+      body: _isProcessingOrder
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Processing your order...'),
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: Stepper(
+                    currentStep: _currentStep,
+                    onStepTapped: (step) {
+                      if (step < _currentStep) {
+                        setState(() {
+                          _currentStep = step;
+                        });
+                      }
+                    },
+                    onStepContinue: _nextStep,
+                    onStepCancel: _currentStep > 0 ? _previousStep : null,
+                    controlsBuilder: (context, details) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: details.onStepContinue,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: Text(_currentStep == 2 ? 'Place Order' : 'Continue'),
+                              ),
+                            ),
+                            if (_currentStep > 0) ...[
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: details.onStepCancel,
+                                  child: const Text('Back'),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                    steps: [
+                      Step(
+                        title: const Text('Delivery Address'),
+                        content: _buildAddressStep(),
+                        isActive: _currentStep >= 0,
+                        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                      ),
+                      Step(
+                        title: const Text('Payment Method'),
+                        content: _buildPaymentStep(),
+                        isActive: _currentStep >= 1,
+                        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                      ),
+                      Step(
+                        title: const Text('Review Order'),
+                        content: _buildReviewStep(),
+                        isActive: _currentStep >= 2,
+                        state: StepState.indexed,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildAddressStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_savedAddresses.isNotEmpty) ...[
+          Row(
+            children: [
+              Radio<bool>(
+                value: false,
+                groupValue: _useNewAddress,
+                onChanged: (value) {
+                  setState(() {
+                    _useNewAddress = !value!;
+                  });
+                },
+              ),
+              const Text('Use saved address'),
+              const SizedBox(width: 20),
+              Radio<bool>(
+                value: true,
+                groupValue: _useNewAddress,
+                onChanged: (value) {
+                  setState(() {
+                    _useNewAddress = value!;
+                  });
+                },
+              ),
+              const Text('Enter new address'),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        if (!_useNewAddress && _savedAddresses.isNotEmpty)
+          _buildSavedAddressesList()
+        else
+          _buildNewAddressForm(),
+          
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Delivery Options',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                ..._deliveryOptions.entries.map((entry) {
+                  final isSelected = _selectedDeliveryOption == entry.key;
+                  final option = entry.value;
+                  return RadioListTile<String>(
+                    title: Text(option['name']),
+                    subtitle: Text('${option['days']} - ${PriceUtils.formatPrice(option['cost'], currency: widget.cartManager.displayCurrencySymbol)}'),
+                    value: entry.key,
+                    groupValue: _selectedDeliveryOption,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDeliveryOption = value!;
+                      });
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
         ),
+        
+        const SizedBox(height: 16),
+        TextField(
+          maxLines: 3,
+          onChanged: (value) {
+            _orderNotes = value;
+          },
+          decoration: const InputDecoration(
+            labelText: 'Order Notes (Optional)',
+            hintText: 'Special instructions for delivery...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSavedAddressesList() {
+    return Column(
+      children: [
+        ..._savedAddresses.map((address) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: RadioListTile<Address>(
+              title: Text(address.fullName),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(address.formattedAddress),
+                  const SizedBox(height: 4),
+                  Text('Phone: ${address.phone}'),
+                ],
+              ),
+              value: address,
+              groupValue: _selectedAddress,
+              onChanged: (value) {
+                setState(() {
+                  _selectedAddress = value;
+                });
+              },
+              secondary: address.isDefault
+                  ? Chip(
+                      label: const Text('Default', style: TextStyle(fontSize: 10)),
+                      backgroundColor: Colors.green.shade100,
+                    )
+                  : null,
+            ),
+          );
+        }).toList(),
+        
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _useNewAddress = true;
+            });
+          },
+          child: const Text('+ Add New Address'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewAddressForm() {
+    return Form(
+      key: _addressFormKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _fullNameController,
+            decoration: const InputDecoration(
+              labelText: 'Full Name',
+              prefixIcon: Icon(Icons.person),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) => value?.isEmpty ?? true ? 'Please enter your full name' : null,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _phoneController,
+            decoration: const InputDecoration(
+              labelText: 'Phone Number',
+              prefixIcon: Icon(Icons.phone),
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value?.isEmpty ?? true) return 'Please enter phone number';
+              if (value!.length < 10) return 'Enter valid phone number';
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _streetAddressController,
+            decoration: const InputDecoration(
+              labelText: 'Street Address',
+              prefixIcon: Icon(Icons.home),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) => value?.isEmpty ?? true ? 'Please enter street address' : null,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _cityController,
+                  decoration: const InputDecoration(
+                    labelText: 'City',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Please enter city' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _stateController,
+                  decoration: const InputDecoration(
+                    labelText: 'State',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Please enter state' : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _postalCodeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Postal Code',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value?.isEmpty ?? true ? 'Please enter postal code' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _countryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Country',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Please enter country' : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _selectedAddressType,
+            decoration: const InputDecoration(
+              labelText: 'Address Type',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'home', child: Text('Home')),
+              DropdownMenuItem(value: 'work', child: Text('Work')),
+              DropdownMenuItem(value: 'other', child: Text('Other')),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedAddressType = value!;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          CheckboxListTile(
+            title: const Text('Save this address for future orders'),
+            value: _saveAddressAsDefault,
+            onChanged: (value) {
+              setState(() {
+                _saveAddressAsDefault = value!;
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+        ],
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
+    );
+  }
+
+  Widget _buildPaymentStep() {
+    return Column(
+      children: [
+        ..._paymentMethods.map((method) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: RadioListTile<PaymentMethod>(
+              title: Row(
+                children: [
+                  Text(method.icon, style: const TextStyle(fontSize: 24)),
+                  const SizedBox(width: 12),
+                  Text(method.name),
+                ],
+              ),
+              value: method,
+              groupValue: _selectedPaymentMethod,
+              onChanged: method.isEnabled ? (value) {
+                setState(() {
+                  _selectedPaymentMethod = value;
+                });
+              } : null,
+              subtitle: method.id == 'cod' 
+                  ? const Text('Pay when you receive your order')
+                  : null,
+            ),
+          );
+        }).toList(),
+        
+        if (_selectedPaymentMethod?.id == 'card')
+          _buildCardPaymentForm(),
+        
+        if (_selectedPaymentMethod?.id == 'upi')
+          _buildUPIPaymentForm(),
+      ],
+    );
+  }
+
+  Widget _buildCardPaymentForm() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'Card Number',
+              prefixIcon: Icon(Icons.credit_card),
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Expiry Date (MM/YY)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'CVV',
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'Cardholder Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUPIPaymentForm() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'UPI ID (e.g., name@okhdfcbank)',
+              prefixIcon: Icon(Icons.qr_code),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text('Scan QR Code'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewStep() {
+    final address = _getAddress();
+    
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Order Items',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 12),
+                  ...widget.cartManager.items.map((item) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            color: Colors.grey[200],
+                            child: item.image != null
+                                ? (item.image!.startsWith('data:image/')
+                                    ? Image.memory(
+                                        base64Decode(item.image!.split(',')[1]),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(item.image!, fit: BoxFit.cover))
+                                : const Icon(Icons.image),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                Text('Qty: ${item.quantity}'),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            PriceUtils.formatPrice(item.totalPrice, currency: item.currencySymbol),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Subtotal'),
+                      Text(PriceUtils.formatPrice(_subtotal, currency: widget.cartManager.displayCurrencySymbol)),
+                    ],
+                  ),
+                  if (_totalDiscount > 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Discount'),
+                        Text(
+                          '-${PriceUtils.formatPrice(_totalDiscount, currency: widget.cartManager.displayCurrencySymbol)}',
+                          style: const TextStyle(color: Colors.green),
+                        ),
+                      ],
+                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('GST ($_gstPercentage%)'),
+                      Text(PriceUtils.formatPrice(_taxAmount, currency: widget.cartManager.displayCurrencySymbol)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Shipping (${_deliveryOptions[_selectedDeliveryOption]?['name']})'),
+                      Text(PriceUtils.formatPrice(_shippingCost, currency: widget.cartManager.displayCurrencySymbol)),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      Text(
+                        PriceUtils.formatPrice(_grandTotal, currency: widget.cartManager.displayCurrencySymbol),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Shipping Address',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(address.fullName),
+                  Text(address.formattedAddress),
+                  Text('Phone: ${address.phone}'),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Payment Method',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(_selectedPaymentMethod!.icon, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(width: 12),
+                      Text(_selectedPaymentMethod!.name),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          if (_orderNotes.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Order Notes',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(_orderNotes),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 16),
+          
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _placeOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Place Order',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== ORDER CONFIRMATION PAGE ====================
+
+class OrderConfirmationPage extends StatelessWidget {
+  final String orderId;
+  final String orderNumber;
+  final double total;
+  final String currencySymbol;
+  final String estimatedDelivery;
+
+  const OrderConfirmationPage({
+    super.key,
+    required this.orderId,
+    required this.orderNumber,
+    required this.total,
+    required this.currencySymbol,
+    required this.estimatedDelivery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    size: 60,
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Order Placed Successfully!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Order #$orderNumber',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Amount'),
+                            Text(
+                              PriceUtils.formatPrice(total, currency: currencySymbol),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Icon(Icons.delivery_dining, size: 20, color: Colors.orange),
+                            const SizedBox(width: 8),
+                            Text('Estimated Delivery: $estimatedDelivery'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.email, size: 20, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            const Text('Order confirmation sent to your email'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HomePage()),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue Shopping',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Order tracking coming soon!')),
+                    );
+                  },
+                  child: const Text('Track Your Order'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-    ),
-    home: const SplashScreen(),
-    debugShowCheckedModeBanner: false,
-  );
+    );
+  }
 }
 
-// Splash Screen
+// ==================== SPLASH SCREEN ====================
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -390,7 +1500,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _fetchAppNameAndNavigate() async {
     try {
       final adminId = await AdminManager.getCurrentAdminId();
-      
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/api/admin/splash?adminId=$adminId&appId=${ApiConfig.appId}'),
       );
@@ -479,7 +1588,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// Sign In Page
+// ==================== SIGN IN PAGE ====================
+
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
 
@@ -657,7 +1767,8 @@ class _SignInPageState extends State<SignInPage> {
   }
 }
 
-// Create Account Page
+// ==================== CREATE ACCOUNT PAGE ====================
+
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
 
@@ -900,7 +2011,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   }
 }
 
-// ChatBot Page
+// ==================== CHATBOT PAGE ====================
+
 class ChatBotPage extends StatelessWidget {
   final String shopName;
   final String appName;
@@ -939,7 +2051,8 @@ class ChatBotPage extends StatelessWidget {
   }
 }
 
-// Home Page
+// ==================== HOME PAGE ====================
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -1810,7 +2923,7 @@ class _HomePageState extends State<HomePage> {
                     elevation: 4,
                   ),
                   child: const Text(
-                    'Buy Now',
+                    'Proceed to Checkout',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -2022,4 +3135,53 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+}
+
+// ==================== MAIN ====================
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    title: 'Generated E-commerce App',
+    theme: ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorSchemeSeed: Colors.blue,
+      appBarTheme: const AppBarTheme(
+        elevation: 4,
+        shadowColor: Colors.black38,
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      cardTheme: const CardThemeData(
+        elevation: 4,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+    ),
+    home: const SplashScreen(),
+    debugShowCheckedModeBanner: false,
+  );
 }
