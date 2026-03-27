@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:appifyours/services/api_service.dart';
 
 // ================================================================
 // ⚙️  CONFIG — ONLY EDIT THIS SECTION
 // ================================================================
 class ShiprocketConfig {
-  // 👇 API USER credentials (NOT your main Shiprocket login)
-  // Create API User in Shiprocket → Settings → API → Configure
-  // Use a DIFFERENT email than your main account
   static const String email    = 'dhavakumar870@gmail.com';
   static const String password = '9!wgMrjyNugCUo04oYlu5aBYmKa#47hV';
 
-  // 📍 Pickup address (your warehouse/store)
   static const Map<String, String> pickupAddress = {
     'name': 'Bhargavi Enterprises',
     'address': '123 Main Street',
@@ -83,6 +77,7 @@ class AddressData {
   final String addressLine2;
   final String city;
   final String state;
+  final String country; // ✅ FIX 1: Added missing country field
 
   AddressData({
     required this.fullName,
@@ -93,6 +88,7 @@ class AddressData {
     required this.addressLine2,
     required this.city,
     required this.state,
+    this.country = 'India', // default to India
   });
 }
 
@@ -164,7 +160,6 @@ class ShiprocketService {
   String? _token;
   DateTime? _tokenExpiry;
 
-  // 🔐 Authenticate and get token
   Future<bool> _login() async {
     if (_token != null && _tokenExpiry != null && DateTime.now().isBefore(_tokenExpiry!)) {
       return true;
@@ -194,7 +189,6 @@ class ShiprocketService {
     return false;
   }
 
-  // 📍 Check if pincode is serviceable
   Future<PincodeResult> checkPincode(String pincode) async {
     if (!await _login()) return PincodeResult(serviceable: false, message: 'Authentication failed');
 
@@ -217,7 +211,6 @@ class ShiprocketService {
     return PincodeResult(serviceable: false, message: 'Unable to verify pincode');
   }
 
-  // 📦 Get available couriers and rates
   Future<List<CourierOption>> getCourierRates({required String pincode, required double orderValue}) async {
     if (!await _login()) return [];
 
@@ -245,7 +238,6 @@ class ShiprocketService {
     return [];
   }
 
-  // 🚀 Create order and generate AWB
   Future<OrderResult> createOrder({
     required AddressData address,
     required List<Map<String, dynamic>> orderItems,
@@ -269,7 +261,7 @@ class ShiprocketService {
         'billing_city': address.city,
         'billing_pincode': address.pincode,
         'billing_state': address.state,
-        'billing_country': address.country,
+        'billing_country': address.country, // ✅ FIX 1: now compiles
         'billing_email': address.email,
         'billing_phone': address.phone,
         'shipping_is_billing': true,
@@ -308,7 +300,6 @@ class ShiprocketService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == true && data['order_id'] != null) {
-          // Now generate AWB
           return await _generateAWB(data['order_id'].toString(), courierId);
         }
         return OrderResult(success: false, message: data['message'] ?? 'Order creation failed');
@@ -319,7 +310,6 @@ class ShiprocketService {
     return OrderResult(success: false, message: 'Failed to create order');
   }
 
-  // 📋 Generate AWB (Air Waybill)
   Future<OrderResult> _generateAWB(String orderId, String courierId) async {
     if (!await _login()) return OrderResult(success: false, message: 'Authentication failed');
 
@@ -358,6 +348,74 @@ class ShiprocketService {
 }
 
 // ================================================================
+// 🛒  CART MODELS
+// ================================================================
+class CartItem {
+  final String id;
+  final String name;
+  final double price;
+  final double effectivePrice;
+  final int quantity;
+  final String? currencySymbol;
+
+  CartItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.effectivePrice,
+    this.quantity = 1,
+    this.currencySymbol,
+  });
+}
+
+class CartManager extends ChangeNotifier {
+  final List<CartItem> _items = [];
+
+  List<CartItem> get items => List.unmodifiable(_items);
+  String get displayCurrencySymbol => '₹';
+
+  double get subtotal => _items.fold(0.0, (sum, item) => sum + (item.effectivePrice * item.quantity));
+  double get totalDiscount => _items.fold(0.0, (sum, item) => sum + ((item.price - item.effectivePrice) * item.quantity));
+  double get gstAmount => subtotal * 0.18;
+  double get finalTotal => subtotal + gstAmount;
+
+  void addItem(CartItem item) {
+    _items.add(item);
+    notifyListeners();
+  }
+
+  void removeItem(String id) {
+    _items.removeWhere((item) => item.id == id);
+    notifyListeners();
+  }
+
+  // ✅ FIX 2: Added clearCart() as alias for clear()
+  void clearCart() {
+    _items.clear();
+    notifyListeners();
+  }
+
+  void clear() {
+    _items.clear();
+    notifyListeners();
+  }
+}
+
+// ================================================================
+// 🏠  HOME PAGE PLACEHOLDER
+// ✅ FIX 5: Added HomePage so OrderSuccessPage can navigate back
+// ================================================================
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Home')),
+    body: const Center(child: Text('Home Page')),
+  );
+}
+
+// ================================================================
 // 🎯  MAIN WIDGET
 // ================================================================
 class DeliveryCheckoutPage extends StatefulWidget {
@@ -365,7 +423,8 @@ class DeliveryCheckoutPage extends StatefulWidget {
 
   const DeliveryCheckoutPage({super.key, required this.cartManager});
 
-  @override State<DeliveryCheckoutPage> createState() => _DCPState();
+  @override
+  State<DeliveryCheckoutPage> createState() => _DCPState();
 }
 
 class _DCPState extends State<DeliveryCheckoutPage> {
@@ -388,10 +447,10 @@ class _DCPState extends State<DeliveryCheckoutPage> {
   bool                _loadingC   = false;
 
   final _slots = [
-    TimeSlot(id:'s1', label:'🌅 Morning',   timeRange:'9:00 AM – 12:00 PM'),
-    TimeSlot(id:'s2', label:'☀️ Afternoon',  timeRange:'12:00 PM – 3:00 PM'),
-    TimeSlot(id:'s3', label:'🌆 Evening',    timeRange:'3:00 PM – 6:00 PM'),
-    TimeSlot(id:'s4', label:'🌙 Night',      timeRange:'6:00 PM – 9:00 PM'),
+    TimeSlot(id: 's1', label: '🌅 Morning',   timeRange: '9:00 AM – 12:00 PM'),
+    TimeSlot(id: 's2', label: '☀️ Afternoon',  timeRange: '12:00 PM – 3:00 PM'),
+    TimeSlot(id: 's3', label: '🌆 Evening',    timeRange: '3:00 PM – 6:00 PM'),
+    TimeSlot(id: 's4', label: '🌙 Night',      timeRange: '6:00 PM – 9:00 PM'),
   ];
   TimeSlot? _selSlot;
   DateTime  _selDate = DateTime.now().add(const Duration(days: 1));
@@ -403,39 +462,42 @@ class _DCPState extends State<DeliveryCheckoutPage> {
   String get _currency {
     try {
       final sym = widget.cartManager.displayCurrencySymbol;
-      if (sym is String && sym.isNotEmpty) return sym;
-    } catch (_) {}
-    try {
-      final first = _items.isNotEmpty ? _items.first : null;
-      final sym = first?.currencySymbol;
-      if (sym is String && sym.isNotEmpty) return sym;
+      if (sym.isNotEmpty) return sym;
     } catch (_) {}
     return '₹';
   }
 
   double get _subtotal {
-    try { return (widget.cartManager.subtotal as num).toDouble(); } catch (_) { return _cartTotal; }
+    try { return widget.cartManager.subtotal; } catch (_) { return _cartTotal; }
   }
 
   double get _gstAmount {
-    try { return (widget.cartManager.gstAmount as num).toDouble(); } catch (_) { return (_cartTotal - _subtotal); }
+    try { return widget.cartManager.gstAmount; } catch (_) { return 0.0; }
   }
 
   double get _discountAmount {
-    try { return (widget.cartManager.totalDiscount as num).toDouble(); } catch (_) { return 0.0; }
+    try { return widget.cartManager.totalDiscount; } catch (_) { return 0.0; }
   }
 
   double get _cartTotal {
-    try { return (widget.cartManager.finalTotal as num).toDouble(); } catch (_) { return 0.0; }
+    try { return widget.cartManager.finalTotal; } catch (_) { return 0.0; }
   }
+
   double get _shipping => _selCourier?.rate ?? 0.0;
   double get _grand    => _cartTotal + _shipping;
-  List   get _items    { try { return widget.cartManager.items as List; } catch (_) { return []; } }
+  List<CartItem> get _items => widget.cartManager.items;
 
   @override
   void dispose() {
-    for (final c in [_nameCtrl,_phoneCtrl,_emailCtrl,_pinCtrl,_a1Ctrl,_a2Ctrl,_cityCtrl,_stCtrl]) c.dispose();
+    for (final c in [_nameCtrl, _phoneCtrl, _emailCtrl, _pinCtrl, _a1Ctrl, _a2Ctrl, _cityCtrl, _stCtrl]) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  // ✅ FIX 4: Wrapped async _checkPin in a sync void callback
+  void _onPinChanged(String pin) {
+    _checkPin(pin);
   }
 
   Future<void> _checkPin(String pin) async {
@@ -451,7 +513,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       if (r.state.isNotEmpty) _stCtrl.text   = r.state;
       setState(() { _pinOk = true; _checkingPin = false; });
     } else {
-      setState(() { _pinOk = false; _pinError = r.message ?? 'Delivery not available'; _checkingPin = false; });
+      setState(() { _pinOk = false; _pinError = r.message.isNotEmpty ? r.message : 'Delivery not available'; _checkingPin = false; });
     }
   }
 
@@ -492,10 +554,11 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       addressLine2: _a2Ctrl.text.trim(),
       city: _cityCtrl.text.trim(),
       state: _stCtrl.text.trim(),
+      country: 'India',
     );
 
     final orderItems = _items.map((i) => {
-      'name': i.name.toString(),
+      'name': i.name,
       'sku': 'SKU${i.id}',
       'units': i.quantity,
       'selling_price': i.effectivePrice,
@@ -516,13 +579,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     setState(() { _placing = false; });
 
     if (result.success) {
-      try {
-        // Order placed successfully - you can add API call here if needed
-        // Example: await ApiService.saveOrder({ ... });
-      } catch (_) {
-        // Saving order history should not block the checkout success flow
-      }
-      try { widget.cartManager.clearCart(); } catch (_) {}
+      try { widget.cartManager.clearCart(); } catch (_) {} // ✅ FIX 2: clearCart() now exists
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => OrderSuccessPage(
@@ -536,7 +593,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
         )),
       );
     } else {
-      // Show the REAL error from Shiprocket
       _snack('Order failed: ${result.message}');
       debugPrint('❌ Order failed: ${result.message}');
     }
@@ -603,7 +659,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
                 return Container(
                   width: 40,
                   height: 2,
-                  color: i ~/ 2 < _step ? Colors.white : Colors.white24,
+                  color: i ~/ 2 < _step ? Colors.green.shade200 : Colors.grey.shade200,
                 );
               }
             }),
@@ -614,11 +670,11 @@ class _DCPState extends State<DeliveryCheckoutPage> {
           padding: const EdgeInsets.only(bottom: 16),
           color: Colors.white,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEven,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly, // ✅ FIX 3: spaceEven → spaceEvenly
             children: const [
-              Text('Address', style: TextStyle(fontSize: 12)),
+              Text('Address',  style: TextStyle(fontSize: 12)),
               Text('Shipping', style: TextStyle(fontSize: 12)),
-              Text('Payment', style: TextStyle(fontSize: 12)),
+              Text('Payment',  style: TextStyle(fontSize: 12)),
             ],
           ),
         ),
@@ -640,14 +696,14 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       children: [
         _card('📍 Delivery Address', Column(
           children: [
-            _tf(_nameCtrl,  'Full Name *',              Icons.person,        TextInputType.name),
+            _tf(_nameCtrl,  'Full Name *',               Icons.person,        TextInputType.name),
             const SizedBox(height: 12),
-            _tf(_phoneCtrl, 'Phone Number *',            Icons.phone,         TextInputType.phone, max: 10),
+            _tf(_phoneCtrl, 'Phone Number *',             Icons.phone,         TextInputType.phone, max: 10),
             const SizedBox(height: 12),
-            _tf(_emailCtrl, 'Email (optional)',           Icons.email,         TextInputType.emailAddress),
+            _tf(_emailCtrl, 'Email (optional)',            Icons.email,         TextInputType.emailAddress),
             const SizedBox(height: 12),
-            _tf(_pinCtrl,   'PIN Code *',                 Icons.location_on,    TextInputType.number, max: 6,
-              onChanged: _checkPin,
+            _tf(_pinCtrl,   'PIN Code *',                  Icons.location_on,   TextInputType.number, max: 6,
+              onChanged: _onPinChanged, // ✅ FIX 4: sync wrapper used here
               suffixIcon: _checkingPin
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : (_pinOk ? const Icon(Icons.check_circle, color: Colors.green) : null),
@@ -655,9 +711,9 @@ class _DCPState extends State<DeliveryCheckoutPage> {
             ),
             if (_pinOk) ...[
               const SizedBox(height: 12),
-              _tf(_a1Ctrl, 'Address Line 1 *',        Icons.home,          TextInputType.streetAddress),
+              _tf(_a1Ctrl, 'Address Line 1 *',         Icons.home,          TextInputType.streetAddress),
               const SizedBox(height: 12),
-              _tf(_a2Ctrl, 'Address Line 2 (Optional)', Icons.apartment,    TextInputType.streetAddress),
+              _tf(_a2Ctrl, 'Address Line 2 (Optional)', Icons.apartment,     TextInputType.streetAddress),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -680,9 +736,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       children: [
         _card('📅 Select Delivery Date', Column(
           children: [
-            for (int i = 0; i < 7; i++)
-            if (i > 0)
-            _dateTile(DateTime.now().add(Duration(days: i))),
+            for (int i = 1; i < 7; i++)
+              _dateTile(DateTime.now().add(Duration(days: i))),
           ],
         )),
         const SizedBox(height: 16),
@@ -697,7 +752,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
                 : Column(children: _couriers.map((c) => _courierTile(c)).toList()),
         ),
         const SizedBox(height: 16),
-        _orderSummary(),
+        _card('🧾 Order Summary', _orderSummary()),
       ],
     ),
   );
@@ -708,12 +763,12 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       children: [
         _card('💳 Payment Method', Column(
           children: [
-            _payTile('prepaid', '💳 Pay Online', 'Credit/Debit Card, UPI, Wallets'),
-            _payTile('cod', '💰 Cash on Delivery', 'Pay when order arrives'),
+            _payTile('prepaid', '💳 Pay Online',          'Credit/Debit Card, UPI, Wallets'),
+            _payTile('cod',     '💰 Cash on Delivery',    'Pay when order arrives'),
           ],
         )),
         const SizedBox(height: 16),
-        _card('📦 Order Summary', _orderDetails()),
+        _card('📦 Order Summary',    _orderDetails()),
         const SizedBox(height: 16),
         _card('📍 Delivery Address', _addrSummary()),
       ],
@@ -740,18 +795,30 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     ),
   );
 
-  Widget _tf(TextEditingController ctrl, String label, IconData icon, TextInputType type, {int? max, VoidCallback? onChanged, Widget? suffixIcon, String? errorText}) => TextField(
+  Widget _tf(
+    TextEditingController ctrl,
+    String label,
+    IconData icon,
+    TextInputType type, {
+    int? max,
+    void Function(String)? onChanged, // ✅ FIX 4: correct sync signature
+    Widget? suffixIcon,
+    String? errorText,
+  }) => TextField(
     controller: ctrl,
     keyboardType: type,
     maxLength: max,
-    onChanged: onChanged != null ? (_) => onChanged() : null,
+    onChanged: onChanged,
     decoration: InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: Colors.grey.shade600),
       suffixIcon: suffixIcon,
       errorText: errorText,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF3182CE))),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFF3182CE)),
+      ),
     ),
   );
 
@@ -770,7 +837,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${dt.day} ${_monthName(dt.month)}', style: TextStyle(fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+            Text('${dt.day} ${_monthName(dt.month)}',
+                 style: TextStyle(fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
             if (sel) const Icon(Icons.check_circle, color: Color(0xFF3182CE)),
           ],
         ),
@@ -801,7 +869,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
               ],
             ),
             Radio<String>(
-              value: s.id, groupValue: _selSlot?.id,
+              value: s.id,
+              groupValue: _selSlot?.id,
               onChanged: (_) => setState(() => _selSlot = s),
             ),
           ],
@@ -829,12 +898,14 @@ class _DCPState extends State<DeliveryCheckoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(c.courierName, style: TextStyle(fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
-                  Text('₹${c.rate.toStringAsFixed(2)} • ${c.etd}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  Text('₹${c.rate.toStringAsFixed(2)} • ${c.etd}',
+                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                 ],
               ),
             ),
             Radio<String>(
-              value: c.courierId, groupValue: _selCourier?.courierId,
+              value: c.courierId,
+              groupValue: _selCourier?.courierId,
               onChanged: (_) => setState(() => _selCourier = c),
             ),
           ],
@@ -870,7 +941,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
                 ),
               ),
               Radio<String>(
-                value: val, groupValue: _pay,
+                value: val,
+                groupValue: _pay,
                 onChanged: enabled ? (_) => setState(() => _pay = val) : null,
               ),
             ],
@@ -889,11 +961,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       _brow('Grand Total', '₹${_grand.toStringAsFixed(2)}', bold: true),
       if (_selCourier != null) _brow('Est. Delivery', '${_selCourier!.estimatedDays} days', valueColor: Colors.green),
       if (_selSlot    != null) _brow('Time Slot', '${_selSlot!.label} • ${_selSlot!.timeRange}', valueColor: Colors.blue),
-      const SizedBox(height: 8),
-      Text(
-        _selCourier?.codAvailable == true ? 'Pay when order arrives' : 'Not available for selected courier',
-        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-      ),
     ],
   );
 
@@ -904,18 +971,18 @@ class _DCPState extends State<DeliveryCheckoutPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: Text(i.name.toString(), style: const TextStyle(fontSize: 14))),
-            Text('${_currency}${((i.effectivePrice as num) * (i.quantity as num)).toStringAsFixed(2)}'),
+            Expanded(child: Text(i.name, style: const TextStyle(fontSize: 14))),
+            Text('$_currency${(i.effectivePrice * i.quantity).toStringAsFixed(2)}'),
           ],
         ),
       )),
       const Divider(),
-      _brow('Subtotal', '${_currency}${_subtotal.toStringAsFixed(2)}'),
-      if (_discountAmount > 0) _brow('Discount', '-${_currency}${_discountAmount.toStringAsFixed(2)}', valueColor: Colors.green),
-      if (_gstAmount > 0) _brow('GST', '${_currency}${_gstAmount.toStringAsFixed(2)}'),
-      if (_shipping > 0) _brow('Shipping', '${_currency}${_shipping.toStringAsFixed(2)}'),
+      _brow('Subtotal', '$_currency${_subtotal.toStringAsFixed(2)}'),
+      if (_discountAmount > 0) _brow('Discount', '-$_currency${_discountAmount.toStringAsFixed(2)}', valueColor: Colors.green),
+      if (_gstAmount > 0)      _brow('GST',      '$_currency${_gstAmount.toStringAsFixed(2)}'),
+      if (_shipping > 0)       _brow('Shipping',  '$_currency${_shipping.toStringAsFixed(2)}'),
       const Divider(),
-      _brow('Grand Total', '${_currency}${_grand.toStringAsFixed(2)}', bold: true),
+      _brow('Grand Total', '$_currency${_grand.toStringAsFixed(2)}', bold: true),
     ],
   );
 
@@ -975,7 +1042,8 @@ class _DCPState extends State<DeliveryCheckoutPage> {
   );
 
   String _monthName(int month) {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month];
   }
 
@@ -985,12 +1053,11 @@ class _DCPState extends State<DeliveryCheckoutPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
-        Text(value,
-             style: TextStyle(
-               fontSize: 14,
-               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-               color: valueColor ?? Colors.black,
-             )),
+        Text(value, style: TextStyle(
+          fontSize: 14,
+          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+          color: valueColor ?? Colors.black,
+        )),
       ],
     ),
   );
@@ -1043,38 +1110,41 @@ class OrderSuccessPage extends StatelessWidget {
               children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 80),
                 const SizedBox(height: 16),
-                const Text('Order Placed Successfully!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF22543D))),
+                const Text('Order Placed Successfully!',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF22543D))),
                 const SizedBox(height: 8),
-                Text('Order ID: ${result.orderId ?? 'N/A'}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                Text('Order ID: ${result.orderId ?? 'N/A'}',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey)),
                 if (result.awbCode != null) ...[
                   const SizedBox(height: 4),
-                  Text('AWB Number: ${result.awbCode}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                  Text('AWB Number: ${result.awbCode}',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey)),
                 ],
               ],
             ),
           ),
           const SizedBox(height: 24),
           _infoCard('📦 Order Details', [
-            _infoRow('Order ID', result.orderId ?? 'N/A'),
+            _infoRow('Order ID',          result.orderId ?? 'N/A'),
             if (result.awbCode != null) _infoRow('AWB Number', result.awbCode!),
-            _infoRow('Courier', courier.courierName),
-            _infoRow('Estimated Delivery', '${courier.estimatedDays} days'),
-            _infoRow('Time Slot', '${slot.label} • ${slot.timeRange}'),
-            _infoRow('Payment Method', paymentMethod == 'prepaid' ? 'Paid Online' : 'Cash on Delivery'),
-            _infoRow('Total Amount', '₹${grandTotal.toStringAsFixed(2)}'),
+            _infoRow('Courier',           courier.courierName),
+            _infoRow('Est. Delivery',     '${courier.estimatedDays} days'),
+            _infoRow('Time Slot',         '${slot.label} • ${slot.timeRange}'),
+            _infoRow('Payment',           paymentMethod == 'prepaid' ? 'Paid Online' : 'Cash on Delivery'),
+            _infoRow('Total Amount',      '₹${grandTotal.toStringAsFixed(2)}'),
           ]),
           const SizedBox(height: 16),
           _infoCard('📍 Delivery Address', [
-            _infoRow('Name', address.fullName),
+            _infoRow('Name',    address.fullName),
             _infoRow('Address', '${address.addressLine1}, ${address.addressLine2}'),
-            _infoRow('City', '${address.city}, ${address.state} - ${address.pincode}'),
-            _infoRow('Phone', address.phone),
+            _infoRow('City',    '${address.city}, ${address.state} - ${address.pincode}'),
+            _infoRow('Phone',   address.phone),
           ]),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
+              MaterialPageRoute(builder: (_) => const HomePage()), // ✅ FIX 5: HomePage now defined above
               (route) => false,
             ),
             style: ElevatedButton.styleFrom(
@@ -1113,62 +1183,9 @@ class OrderSuccessPage extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 120,
-          child: Text(label, style: TextStyle(color: Colors.grey.shade600)),
-        ),
-        Expanded(
-          child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
-        ),
+        SizedBox(width: 120, child: Text(label, style: TextStyle(color: Colors.grey.shade600))),
+        Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
       ],
     ),
   );
-}
-
-// ================================================================
-// 🔧  CART MANAGER (Placeholder - replace with your actual implementation)
-// ================================================================
-class CartManager extends ChangeNotifier {
-  final List<CartItem> _items = [];
-  
-  List<CartItem> get items => List.unmodifiable(_items);
-  String get displayCurrencySymbol => '\$';
-  
-  double get subtotal => _items.fold(0.0, (sum, item) => sum + (item.effectivePrice * item.quantity));
-  double get totalDiscount => _items.fold(0.0, (sum, item) => sum + ((item.price - item.effectivePrice) * item.quantity));
-  double get gstAmount => subtotal * 0.18; // 18% GST
-  double get finalTotal => subtotal + gstAmount;
-  
-  void addItem(CartItem item) {
-    _items.add(item);
-    notifyListeners();
-  }
-  
-  void removeItem(String id) {
-    _items.removeWhere((item) => item.id == id);
-    notifyListeners();
-  }
-  
-  void clear() {
-    _items.clear();
-    notifyListeners();
-  }
-}
-
-class CartItem {
-  final String id;
-  final String name;
-  final double price;
-  final double effectivePrice;
-  final int quantity;
-  final String? currencySymbol;
-  
-  CartItem({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.effectivePrice,
-    this.quantity = 1,
-    this.currencySymbol,
-  });
 }
