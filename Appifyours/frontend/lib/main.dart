@@ -514,10 +514,10 @@ class _DeliveryCheckoutPageState extends State<DeliveryCheckoutPage> {
           _savedAddresses = addressesJson
               .map((json) => Address.fromJson(jsonDecode(json)))
               .toList();
-          final defaultAddress = _savedAddresses.firstWhere(
-            (addr) => addr.isDefault,
-            orElse: () => _savedAddresses.isNotEmpty ? _savedAddresses.first : null,
-          );
+        final defaultMatches = _savedAddresses.where((addr) => addr.isDefault);
+          final defaultAddress = defaultMatches.isNotEmpty
+              ? defaultMatches.first
+              : (_savedAddresses.isNotEmpty ? _savedAddresses.first : null);
           if (defaultAddress != null) {
             _selectedAddress = defaultAddress;
           }
