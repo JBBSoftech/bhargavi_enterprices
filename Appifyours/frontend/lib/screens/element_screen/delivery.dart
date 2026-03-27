@@ -77,7 +77,7 @@ class AddressData {
   final String addressLine2;
   final String city;
   final String state;
-  final String country; // ✅ FIX 1: Added missing country field
+  final String country;
 
   AddressData({
     required this.fullName,
@@ -88,7 +88,7 @@ class AddressData {
     required this.addressLine2,
     required this.city,
     required this.state,
-    this.country = 'India', // default to India
+    this.country = 'India',
   });
 }
 
@@ -261,7 +261,7 @@ class ShiprocketService {
         'billing_city': address.city,
         'billing_pincode': address.pincode,
         'billing_state': address.state,
-        'billing_country': address.country, // ✅ FIX 1: now compiles
+        'billing_country': address.country,
         'billing_email': address.email,
         'billing_phone': address.phone,
         'shipping_is_billing': true,
@@ -389,7 +389,6 @@ class CartManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ FIX 2: Added clearCart() as alias for clear()
   void clearCart() {
     _items.clear();
     notifyListeners();
@@ -403,7 +402,6 @@ class CartManager extends ChangeNotifier {
 
 // ================================================================
 // 🏠  HOME PAGE PLACEHOLDER
-// ✅ FIX 5: Added HomePage so OrderSuccessPage can navigate back
 // ================================================================
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -495,7 +493,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     super.dispose();
   }
 
-  // ✅ FIX 4: Wrapped async _checkPin in a sync void callback
   void _onPinChanged(String pin) {
     _checkPin(pin);
   }
@@ -579,7 +576,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     setState(() { _placing = false; });
 
     if (result.success) {
-      try { widget.cartManager.clearCart(); } catch (_) {} // ✅ FIX 2: clearCart() now exists
+      try { widget.cartManager.clearCart(); } catch (_) {}
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => OrderSuccessPage(
@@ -616,7 +613,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     }
   }
 
-  // ── BUILD ───────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF5F7FA),
@@ -629,7 +625,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     ),
     body: Column(
       children: [
-        // Progress stepper
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           color: Colors.white,
@@ -665,12 +660,11 @@ class _DCPState extends State<DeliveryCheckoutPage> {
             }),
           ),
         ),
-        // Step labels
         Container(
           padding: const EdgeInsets.only(bottom: 16),
           color: Colors.white,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly, // ✅ FIX 3: spaceEven → spaceEvenly
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: const [
               Text('Address',  style: TextStyle(fontSize: 12)),
               Text('Shipping', style: TextStyle(fontSize: 12)),
@@ -678,7 +672,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
             ],
           ),
         ),
-        // Content
         Expanded(
           child: _step == 0 ? _addrStep()
                : _step == 1 ? _slotStep()
@@ -689,7 +682,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     bottomNavigationBar: _bottomNav(),
   );
 
-  // ── STEP WIDGETS ─────────────────────────────────────────────
   Widget _addrStep() => SingleChildScrollView(
     padding: const EdgeInsets.all(16),
     child: Column(
@@ -703,7 +695,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
             _tf(_emailCtrl, 'Email (optional)',            Icons.email,         TextInputType.emailAddress),
             const SizedBox(height: 12),
             _tf(_pinCtrl,   'PIN Code *',                  Icons.location_on,   TextInputType.number, max: 6,
-              onChanged: _onPinChanged, // ✅ FIX 4: sync wrapper used here
+              onChanged: _onPinChanged,
               suffixIcon: _checkingPin
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : (_pinOk ? const Icon(Icons.check_circle, color: Colors.green) : null),
@@ -775,7 +767,6 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     ),
   );
 
-  // ── UI HELPERS ───────────────────────────────────────────────
   Widget _card(String title, Widget child) => Container(
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 16),
@@ -801,7 +792,7 @@ class _DCPState extends State<DeliveryCheckoutPage> {
     IconData icon,
     TextInputType type, {
     int? max,
-    void Function(String)? onChanged, // ✅ FIX 4: correct sync signature
+    void Function(String)? onChanged,
     Widget? suffixIcon,
     String? errorText,
   }) => TextField(
@@ -1144,7 +1135,7 @@ class OrderSuccessPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => const HomePage()), // ✅ FIX 5: HomePage now defined above
+              MaterialPageRoute(builder: (_) => const HomePage()),
               (route) => false,
             ),
             style: ElevatedButton.styleFrom(
