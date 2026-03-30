@@ -359,8 +359,8 @@ class DynamicAppSync {
 
 // API Configuration
 class ApiConfig {
-  static String get baseUrl => dotenv.env['API_BASE'] ?? 'http://localhost:5000';
-  static const String adminObjectId = '695b5f50c356b1a2bbc81adc';
+  static const String baseUrl = 'https://appifyours.com'; // Changed to localhost
+  static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
   static const String appId = 'APP_ID_HERE';
 }
 
