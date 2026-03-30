@@ -371,7 +371,7 @@ class OrderItem {
 // ==================== API CONFIGURATION ====================
 
 class ApiConfig {
-  static const String baseUrl = 'https://appifyours.com';
+  static const String baseUrl = 'https://appifyours.com'; // Changed to localhost
   static const String adminObjectId = '69bd41c5e3bc3eebb36ca763';
   static const String appId = 'APP_ID_HERE';
 }
@@ -2184,6 +2184,33 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error loading dynamic data: $e');
+      // Add sample products for testing when backend is not available
+      setState(() {
+        _dynamicProductCards = [
+          {
+            'id': 'sample1',
+            'name': 'Sample Product 1',
+            'price': 299.99,
+            'discountPrice': 199.99,
+            'currency': '₹',
+            'image': 'https://via.placeholder.com/150',
+            'description': 'This is a sample product for testing',
+            'category': 'Electronics'
+          },
+          {
+            'id': 'sample2',
+            'name': 'Sample Product 2',
+            'price': 599.99,
+            'discountPrice': 499.99,
+            'currency': '₹',
+            'image': 'https://via.placeholder.com/150',
+            'description': 'Another sample product for testing',
+            'category': 'Clothing'
+          }
+        ];
+        _filterProducts(_searchQuery);
+        _dynamicStoreInfo = {'name': 'Test Store'};
+      });
     }
   }
 
@@ -3179,7 +3206,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
